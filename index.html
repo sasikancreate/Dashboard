@@ -65,3 +65,19 @@
 </script>
 </body>
 </html>
+// ส่วนการดึงข้อมูลจาก Google Sheets
+    async function loadData() {
+        //'https://script.google.com/macros/s/AKfycbx65T153JEl-aBZEYyLsSadSYk_GChNUoIEgXk7fMsn0AUPbwBSiEZkF3Zt14shcwmC/exec' 
+        try {
+            const response = await fetch(scriptUrl);
+            const data = await response.json();
+            console.log("ข้อมูลที่ดึงมาได้:", data); // ตรวจสอบข้อมูลใน Console ของ Browser
+            
+            // หลังจากดึงข้อมูลมาแล้ว จะนำไปประมวลผลต่อเพื่อแสดงบนแผนที่
+            renderMap(data); 
+        } catch (error) {
+            console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", error);
+        }
+    }
+    
+    loadData();
