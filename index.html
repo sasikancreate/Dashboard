@@ -96,3 +96,25 @@
     </script>
 </body>
 </html>
+// 1. ฟังก์ชันกำหนดสีตามความก้าวหน้า (Score-based Heat Map)
+function getColor(districtName, projectsData) {
+    // กรองเอาเฉพาะโครงการที่อยู่ในอำเภอนี้
+    const districtProjects = projectsData.filter(p => p.Districts && p.Districts.includes(districtName));
+    
+    if (districtProjects.length === 0) return '#e5e7eb'; // สีเทาถ้าไม่มีโครงการ
+
+    // ให้คะแนนตามสถานะ (ตัวอย่างการแบ่งกลุ่ม)
+    let totalScore = 0;
+    districtProjects.forEach(p => {
+        if (p.Status.includes('ดำเนินการเสร็จสิ้น')) totalScore += 3;
+        else if (p.Status.includes('อยู่ระหว่างดำเนินการ') || p.Status.includes('ลงนาม')) totalScore += 2;
+        else totalScore += 1; // อยู่ระหว่างจัดซื้อจัดจ้าง หรือเริ่มต้น
+    });
+
+    const avgScore = totalScore / districtProjects.length;
+
+    // คืนค่าสีตามคะแนนเฉลี่ย
+    return avgScore >= 2.5 ? '#15803d' : // เขียว (ดีมาก)
+           avgScore >= 1.5 ? '#f59e0b' : // ส้ม/เหลือง (กำลังทำ)
+                             '#ef4444';   // แดง (เพิ่งเริ่ม/ล่าช้า)
+}
