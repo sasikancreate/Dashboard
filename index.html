@@ -47,16 +47,16 @@
     <script>
         // โหลดข้อมูลจาก data.json ที่ส่งมาจาก Apps Script
         async function initDashboard() {
-            const response = await fetch('data.json');
+            const response = await fetch('districts.json');
             const data = await response.json();
             
             // ตั้งค่า Map (พิกัดกลางเชียงใหม่)
-            const map = L.map('map').setView([18.7883, 98.9853], 8);
+            const dName = feature.properties.amphoe_th || feature.properties.NAME_2 || feature.properties.dist_name;
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
             // ตัวอย่างการวาด GeoJSON และใส่สี Heat Map
             // คุณต้องมีไฟล์ chiangmai-districts.json
-            fetch('chiangmai-districts.json')
+            fetch('districts.json')
                 .then(res => res.json())
                 .then(geoData => {
                     L.geoJSON(geoData, {
