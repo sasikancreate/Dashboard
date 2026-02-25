@@ -2,82 +2,97 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard แผนปฏิบัติราชการเชียงใหม่ 2568</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard ติดตามผลแผนปฏิบัติราชการเชียงใหม่</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
-        .header { text-align: center; color: #2c3e50; margin-bottom: 30px; }
-        .stats-container { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; }
-        .stat-box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; min-width: 200px; }
-        .stat-box h2 { margin: 0; color: #27ae60; }
-        #map { height: 600px; width: 100%; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .info-panel { margin-top: 20px; background: white; padding: 20px; border-radius: 10px; display: none; }
+        #map { height: 600px; border-radius: 15px; }
+        .info-box { transition: transform 0.3s; }
+        .info-box:hover { transform: translateY(-5px); }
     </style>
 </head>
-<body>
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto p-6">
+        <h1 class="text-3xl font-bold text-center text-blue-900 mb-8">
+            ต้นแบบ Dashboard ติดตามผลการดำเนินงานตามแผนปฏิบัติราชการประจำงบประมาณ พ.ศ. 2568
+        </h1>
 
-<div class="header">
-    <h1>ต้นแบบ Dashboard ติดตามผลการดำเนินงานตามแผนปฏิบัติราชการประจำงบประมาณ พ.ศ. 2568</h1>
-</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="info-box bg-white p-6 rounded-xl shadow-md border-l-8 border-blue-500">
+                <p class="text-gray-500 text-sm font-semibold uppercase">จำนวนโครงการทั้งหมด</p>
+                <h2 class="text-4xl font-bold text-blue-900">14 <span class="text-lg">โครงการ</span></h2>
+            </div>
+            <div class="info-box bg-white p-6 rounded-xl shadow-md border-l-8 border-green-500">
+                <p class="text-gray-500 text-sm font-semibold uppercase">งบประมาณรวม</p>
+                <h2 class="text-4xl font-bold text-green-700">342,906,200 <span class="text-lg">บาท</span></h2>
+            </div>
+        </div>
 
-<div class="stats-container">
-    <div class="stat-box">
-        <p>จำนวนโครงการ</p>
-        <h2>14 โครงการ</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 bg-white p-4 rounded-xl shadow-lg">
+                <h3 class="text-xl font-semibold mb-4 text-gray-700">แผนที่แสดงผลรายอำเภอ (Heat Map)</h3>
+                <div id="map"></div>
+            </div>
+
+            <div id="project-detail" class="bg-white p-6 rounded-xl shadow-lg">
+                <h3 class="text-xl font-bold mb-4 text-blue-800">รายละเอียดโครงการ</h3>
+                <p class="text-gray-500 italic">กรุณาคลิกเลือกอำเภอในแผนที่เพื่อดูข้อมูล</p>
+                <div id="detail-content" class="mt-4 space-y-4"></div>
+            </div>
+        </div>
     </div>
-    <div class="stat-box">
-        <p>งบประมาณรวม</p>
-        <h2>342,906,200 บาท</h2>
-    </div>
-</div>
 
-<div id="map"></div>
-<div id="project-detail" class="info-panel">
-    <h3>รายละเอียดโครงการในพื้นที่</h3>
-    <div id="detail-content">คลิกที่อำเภอเพื่อดูรายละเอียด</div>
-</div>
+    <script>
+        // โหลดข้อมูลจาก data.json ที่ส่งมาจาก Apps Script
+        async function initDashboard() {
+            const response = await fetch('data.json');
+            const data = await response.json();
+            
+            // ตั้งค่า Map (พิกัดกลางเชียงใหม่)
+            const map = L.map('map').setView([18.7883, 98.9853], 8);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-    const map = L.map('map').setView([18.7883, 98.9853], 8); // พิกัดเชียงใหม่
+            // ตัวอย่างการวาด GeoJSON และใส่สี Heat Map
+            // คุณต้องมีไฟล์ chiangmai-districts.json
+            fetch('chiangmai-districts.json')
+                .then(res => res.json())
+                .then(geoData => {
+                    L.geoJSON(geoData, {
+                        style: function(feature) {
+                            // คำนวณสีตามผลการดำเนินงานจาก data.projects
+                            return { fillColor: '#3b82f6', weight: 2, opacity: 1, color: 'white', fillOpacity: 0.7 };
+                        },
+                        onEachFeature: function(feature, layer) {
+                            layer.on('click', () => showDetails(feature.properties.dist_name, data.projects));
+                        }
+                    }).addTo(map);
+                });
+        }
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        function showDetails(districtName, projects) {
+            const content = document.getElementById('detail-content');
+            const filtered = projects.filter(p => p.Districts.includes(districtName));
+            
+            if(filtered.length === 0) {
+                content.innerHTML = `<p class="text-red-500">ไม่พบโครงการในพื้นที่ ${districtName}</p>`;
+                return;
+            }
 
-    // ฟังก์ชันกำหนดสีตามผลการดำเนินงาน (Heat Map Logic)
-    function getColor(d) {
-        return d > 80 ? '#006837' :
-               d > 60 ? '#31a354' :
-               d > 40 ? '#78c679' :
-               d > 20 ? '#c2e699' :
-                        '#ffffcc';
-    }
+            content.innerHTML = `<h4 class="font-bold text-lg text-gray-800 underline">${districtName}</h4>`;
+            filtered.forEach(p => {
+                content.innerHTML += `
+                    <div class="p-3 border rounded-lg bg-blue-50">
+                        <p class="font-semibold text-blue-900">${p.Project_Name}</p>
+                        <p class="text-sm text-gray-600">สถานะ: ${p.Status}</p>
+                        <p class="text-sm font-bold text-green-600">งบประมาณ: ${Number(p.Budget).toLocaleString()} บาท</p>
+                    </div>
+                `;
+            });
+        }
 
-    // ส่วนนี้คุณต้องดึง GeoJSON ของอำเภอในเชียงใหม่มาใส่
-    // และ Fetch ข้อมูลจาก Apps Script URL ที่ได้จากขั้นตอนที่ 1
-    async function loadData() {
-        const response = await fetch('YOUR_APPS_SCRIPT_URL_HERE');
-        const data = await response.json();
-        console.log(data);
-        // Logic การแมพข้อมูลลงแผนที่และสร้าง Event คลิก
-    }
-    
-    loadData();
-</script>
+        initDashboard();
+    </script>
 </body>
 </html>
-// ส่วนการดึงข้อมูลจาก Google Sheets
-    async function loadData() {
-        //'https://script.google.com/macros/s/AKfycbx65T153JEl-aBZEYyLsSadSYk_GChNUoIEgXk7fMsn0AUPbwBSiEZkF3Zt14shcwmC/exec' 
-        try {
-            const response = await fetch(scriptUrl);
-            const data = await response.json();
-            console.log("ข้อมูลที่ดึงมาได้:", data); // ตรวจสอบข้อมูลใน Console ของ Browser
-            
-            // หลังจากดึงข้อมูลมาแล้ว จะนำไปประมวลผลต่อเพื่อแสดงบนแผนที่
-            renderMap(data); 
-        } catch (error) {
-            console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", error);
-        }
-    }
-    
-    loadData();
